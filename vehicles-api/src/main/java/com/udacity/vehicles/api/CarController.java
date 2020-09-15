@@ -10,10 +10,13 @@ import com.udacity.vehicles.domain.Condition;
 import com.udacity.vehicles.domain.car.Car;
 import com.udacity.vehicles.domain.car.Details;
 import com.udacity.vehicles.domain.manufacturer.Manufacturer;
+import com.udacity.vehicles.service.CarNotFoundException;
 import com.udacity.vehicles.service.CarService;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
@@ -72,12 +75,11 @@ class CarController {
      */
     @GetMapping("/{id}")
     Resource<Car> get(@PathVariable Long id) {
-        /**
-         * TODO: Use the `findById` method from the Car Service to get car information.
-         * TODO: Use the `assembler` on that car and return the resulting output.
-         *   Update the first line as part of the above implementing.
-         */
-        Car car = carService.findById(id);
+        Optional<Car> optionalCar = Optional.ofNullable(carService.findById(id));
+        if (optionalCar.isEmpty()) {
+            throw new CarNotFoundException();
+        }
+        Car car = optionalCar.get();
         return assembler.toResource(car);
     }
 
@@ -90,11 +92,7 @@ class CarController {
      */
     @PostMapping
     ResponseEntity<?> post(@Valid @RequestBody Car car) throws URISyntaxException {
-        /**
-         * TODO: Use the `save` method from the Car Service to save the input car.
-         * TODO: Use the `assembler` on that saved car and return as part of the response.
-         *   Update the first line as part of the above implementing.
-         */
+        car.setCreatedAt(LocalDateTime.now());
         Car savedCar = this.carService.save(car);
         Resource<Car> resource = assembler.toResource(savedCar);
         return ResponseEntity.created(new URI(resource.getId().expand().getHref())).body(resource);
@@ -109,13 +107,19 @@ class CarController {
      */
     @PutMapping("/{id}")
     ResponseEntity<?> put(@PathVariable Long id, @Valid @RequestBody Car car) {
-        /**
-         * TODO: Set the id of the input car object to the `id` input.
-         * TODO: Save the car using the `save` method from the Car service
-         * TODO: Use the `assembler` on that updated car and return as part of the response.
-         *   Update the first line as part of the above implementing.
-         */
-        Resource<Car> resource = assembler.toResource(new Car());
+        Optional<Car> optionalCar = Optional.ofNullable(carService.findById(id));
+        if (optionalCar.isEmpty()) {
+            throw new CarNotFoundException();
+        }
+        Car existingCar = optionalCar.get();
+        existingCar = car;
+        existingCar.setDetails(car.getDetails());
+        existingCar.setPrice(car.getPrice());
+        existingCar.setLocation(car.getLocation());
+        existingCar.setCondition(car.getCondition());
+        existingCar.setModifiedAt(LocalDateTime.now());
+        carService.save(existingCar);
+        Resource<Car> resource = assembler.toResource(existingCar);
         return ResponseEntity.ok(resource);
     }
 
@@ -127,60 +131,8 @@ class CarController {
      */
     @DeleteMapping("/{id}")
     ResponseEntity<?> delete(@PathVariable Long id) {
-        /**
-         * TODO: Use the Car Service to delete the requested vehicle.
-         */
         carService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
 }
-
-
-//        import java.io.IOException;
-//        import java.util.List;
-//
-//        import org.springframework.beans.factory.annotation.Autowired;
-//        import org.springframework.cloud.client.ServiceInstance;
-//        import org.springframework.cloud.client.discovery.DiscoveryClient;
-//        import org.springframework.http.HttpEntity;
-//        import org.springframework.http.HttpHeaders;
-//        import org.springframework.http.HttpMethod;
-//        import org.springframework.http.MediaType;
-//        import org.springframework.http.ResponseEntity;
-//        import org.springframework.stereotype.Controller;
-//        import org.springframework.web.client.RestClientException;
-//        import org.springframework.web.client.RestTemplate;
-//@Controller
-//public class ConsumerControllerClient {
-
-    /*
-
-    public void getEmployee() throws RestClientException, IOException {
-
-        List<ServiceInstance> instances=discoveryClient.getInstances("employee-producer");
-        ServiceInstance serviceInstance=instances.get(0);
-
-        String baseUrl=serviceInstance.getUri().toString();
-
-        baseUrl=baseUrl+"/employee";
-
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response=null;
-        try{
-            response=restTemplate.exchange(baseUrl,
-                    HttpMethod.GET, getHeaders(),String.class);
-        }catch (Exception ex)
-        {
-            System.out.println(ex);
-        }
-        System.out.println(response.getBody());
-    }
-
-    private static HttpEntity<?> getHeaders() throws IOException {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
-        return new HttpEntity<>(headers);
-    }
-}
-*/

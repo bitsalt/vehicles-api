@@ -112,10 +112,7 @@ public class CarControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.carList", hasSize(1)))
                 .andExpect(jsonPath("$._embedded.carList[0].condition", is(condition)))
-                .andExpect(jsonPath("$._embedded.carList[0].details.body", is(details.getBody())))
-//                .andExpect(jsonPath("$._embedded.carList[0].price", is(notNullValue())))
-//                .andExpect(jsonPath("$._embedded.carList[0].location.address", is(notNullValue())))
-        ;
+                .andExpect(jsonPath("$._embedded.carList[0].details.body", is(details.getBody())));
 
     }
 
@@ -134,13 +131,24 @@ public class CarControllerTest {
                 .accept(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.condition", is(condition)))
-                .andExpect(jsonPath("$.details.body", is(details.getBody())))
-//                .andExpect(jsonPath("$.price", is(car.getPrice())))
-                .andExpect(jsonPath("$.price", is(notNullValue())))
-                .andExpect(jsonPath("$.location.address", is(notNullValue())))
-        ;
+                .andExpect(jsonPath("$.details.body", is(details.getBody())));
 
         verify(carService, times(1)).findById(Long.valueOf(1));
+    }
+
+    @Test
+    @Order(4)
+    public void updateCar() throws Exception {
+        Car car = getCar();
+        Details details = car.getDetails();
+        details.setExternalColor("black");
+        car.setDetails(details);
+        mvc.perform(put(new URI("/cars/1"))
+                .content(json.write(car).getJson())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.details.externalColor", is("black")));
     }
 
     /**
@@ -148,7 +156,7 @@ public class CarControllerTest {
      * @throws Exception if the delete operation of a vehicle fails
      */
     @Test
-    @Order(4)
+    @Order(5)
     public void deleteCar() throws Exception {
         mvc.perform(delete(new URI("/cars/1"))
                 .accept(MediaType.APPLICATION_JSON_UTF8))
