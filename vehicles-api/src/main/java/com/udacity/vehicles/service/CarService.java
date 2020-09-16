@@ -44,9 +44,7 @@ public class CarService {
      * @return the requested car's information, including location and price
      */
     public Car findById(Long id) {
-//        Car car = repository.findById(id).orElseThrow(CarNotFoundException::new);
-        Car car = this.makeNewCar();
-
+        Car car = repository.findById(id).orElseThrow(CarNotFoundException::new);
         car.setPrice(priceClient.getPrice(id));
         car.setLocation(mapsClient.getAddress(car.getLocation()));
         return car;
@@ -80,24 +78,4 @@ public class CarService {
 
     }
 
-    private Car makeNewCar() {
-        Car car = new Car();
-        car.setLocation(new Location(40.730610, -73.935242));
-        Details details = new Details();
-        Manufacturer manufacturer = new Manufacturer(101, "Chevrolet");
-        details.setManufacturer(manufacturer);
-        details.setModel("P.O.S Impala");
-        details.setMileage(32280);
-        details.setExternalColor("Smurf-shit Blue");
-        details.setBody("sedan");
-        details.setEngine("3.6L V6");
-        details.setFuelType("Gasoline");
-        details.setModelYear(2018);
-        details.setProductionYear(2018);
-        details.setNumberOfDoors(4);
-        car.setDetails(details);
-        car.setCondition(Condition.USED);
-        car.setId(1L);
-        return car;
-    }
 }
